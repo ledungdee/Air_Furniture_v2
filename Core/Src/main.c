@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define Humi_Set 70.0
+#define Humi_Set 55
 #include "string.h"
 #include "stdio.h"
 #include "delay.h"
@@ -77,6 +77,7 @@ void check_Water_Out();
 void SLOW_TIM_SET_COMPARE(uint8_t PWM_Target,uint8_t *PWM_INC_From);
 void switch_Mode(uint8_t mode);
 void humi_Adding_Func();
+void pump_Control();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -103,18 +104,18 @@ uint8_t LED_Pc13_State, LED_Water_Alert_State = 0;
 uint8_t is_Btn_Pushed = 0;
 uint32_t switch_Mode_Interval = 0;
 uint32_t air_Status_Interval = 0;
-uint8_t PWM_Value = 0;
-
-//uint8_t PWM_INC_From = 50;
-//uint8_t PWM_Change_Wide_Range = 0;
 
 
 
-uint8_t count_Hall2_Low = 200;
-//uint32_t count_For_Water = 50;
-uint8_t count_For_Water_Out = 0;
-uint16_t LED_Water_Out_Interval = 0;
+uint16_t count_Hall2_Low = 0;
+uint16_t count_For_Water_Out = 0;
+uint32_t LED_Water_Out_Interval = 0;
+uint32_t Interval;
+uint8_t water;
+uint8_t pump = 0;
 uint8_t pump_Status = 0;
+uint32_t pump_Start = 0;
+
 
 uint8_t humi_Adding = 1;
 int32_t humi_Adding_Int = 0xFFFF15A0; // humi Adding checking Interval Init = -60s
@@ -199,12 +200,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_6);
 	HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 	}
-	
+	// to enable pump acive
 	if(GPIO_Pin == GPIO_PIN_7){
-		if(HAL_GetTick() - btn_Interval >= 1000){
+		if(HAL_GetTick() - btn_Interval >= 300){
 			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 			is_Btn_Pushed = 1;
-			HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_11);
+			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
 			btn_Interval = HAL_GetTick();
 		}
 	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_7);
@@ -477,7 +478,77 @@ void check_Btn_Pushed(){
 }
 
 
-/*
+
+void check_Water_Out(){
+	
+		if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15) == 0){
+			if(count_Hall2_Low < 550){
+				count_Hall2_Low ++;
+			}
+		}
+		else{ 
+			count_Hall2_Low = 0;
+			count_For_Water_Out = 0;
+			water = 1;
+		}
+		
+		
+		if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15) == 0 && count_Hall2_Low > 500){ 
+				if(HAL_GetTick() - Interval >= 500){
+							Interval = HAL_GetTick();
+							count_For_Water_Out++;						
+				}
+				if (count_For_Water_Out == 10) {
+					pump = 1;
+				}
+				if (count_For_Water_Out >= 20 && HAL_GetTick() - LED_Water_Out_Interval >= 500 ){
+					HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
+					LED_Water_Out_Interval = HAL_GetTick();
+					water = 0;
+					
+				}
+		}
+		else {
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5,0);
+		}
+}
+
+void pump_Control(){
+	if (pump == 1){
+		if(pump_Status == 0){
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
+			pump_Start = HAL_GetTick();
+			pump_Status = 1;
+		}
+		if( pump_Status == 1 && (HAL_GetTick() - pump_Start >= 7000 )){
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 0);
+			pump_Status = 0;
+			pump = 0;
+		}
+	}
+}
+/* Hall_2 sensor is not stable, it's mean without magnetic, it maybe low or high. It is only low when have magnetic */
+/*void check_Water_Out(){
+	
+		if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15) == 0){
+			if(count_Hall2_Low < 200){		// tang bien dem len vi cam bien khong on dinh
+				count_Hall2_Low ++;
+			}
+		}
+		else count_Hall2_Low = 0;				// reset bien dem neu nhan muc 1
+		
+		if ((HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15) == 0) && (count_Hall2_Low > 190) && (HAL_GetTick() - LED_Water_Out_Interval >= 1000)){  // xac nhan het nuoc
+				HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
+				LED_Water_Out_Interval = HAL_GetTick();
+				count_For_Water_Out ++;
+		}
+		else{
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5,0);
+			LED_Water_Alert_State = 0;
+		}
+}
+
+
 void check_Water_Out(){
 	
 		if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15) == 0){
@@ -499,38 +570,12 @@ void check_Water_Out(){
 		{
 			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
 			count_For_Water = HAL_GetTick();
-			//if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5) == GPIO_PIN_SET){ 
+
 			LED_Water_Alert_State = 1;
-			//}
 		}
 }
+
 */
-
-/* Hall_2 sensor is not stable, it's mean without magnetic, it maybe low or high. It is only low when have magnetic */
-void check_Water_Out(){
-	
-		if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15) == 0){
-			if(count_Hall2_Low < 200){		// tang bien dem len vi cam bien khong on dinh
-				count_Hall2_Low ++;
-			}
-		}
-		else count_Hall2_Low = 0;				// reset bien dem neu nhan muc 1
-		
-		if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15) == 0 && count_Hall2_Low > 190){  // xac nhan het nuoc
-			count_For_Water_Out ++;
-			if(HAL_GetTick() - LED_Water_Out_Interval >= 500 && LED_Water_Alert_State == 0){
-				HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
-				LED_Water_Out_Interval = HAL_GetTick();
-				LED_Water_Alert_State = 1;
-			}
-			
-		}
-		else if(LED_Water_Alert_State == 1) {
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5,0);
-			LED_Water_Alert_State = 0;
-		}
-}
-
 void update_LED_Status(air_Status i){
 	if( i == GOOD || i == MEDIUM){
 		HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, 0);
@@ -671,13 +716,13 @@ void switch_Mode(uint8_t mode){
 }
 
 void humi_Adding_Func(){
-	if(humidity <= Humi_Set && AC_Motor_State == 0 && HAL_GetTick() - humi_Adding_Int >= 3000){
+	if(humidity <= Humi_Set && humidity >= 20 && AC_Motor_State == 0 && HAL_GetTick() - humi_Adding_Int >= 30000 && water == 1){
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, 1);
 		AC_Motor_State = 1;
 		humi_Delay = 0;
 		humi_Adding_Int = HAL_GetTick();
 	}
-	if( (humidity > Humi_Set) && AC_Motor_State == 1 && HAL_GetTick() - humi_Adding_Int >= 3000){	
+	if( (humidity > Humi_Set) && AC_Motor_State == 1 && HAL_GetTick() - humi_Adding_Int >= 30000){	
 		humi_Delay = 1;		
 		humi_Adding_Int = HAL_GetTick();
 	}
@@ -745,6 +790,7 @@ int main(void)
 		
 		LCD_disp();
 		check_Water_Out();
+		pump_Control();
 		check_Btn_Pushed();
 		
 		if(HAL_GetTick() - air_Status_Interval >= 3000){
