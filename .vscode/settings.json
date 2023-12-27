@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "pms7003_hal_stm32.h": "c"
+    }
+}
