@@ -38,8 +38,6 @@ PMS_status _PMS_checksum(uint8_t buff[],uint8_t element);
 PMS_status _PMS_checkarray(uint8_t rxbuf[], uint8_t ack[], uint8_t element);
 
 
-
-
 PMS_status PMS_Init(PMS_typedef *PMS_struct)
 {
 	PMS_status initstatus    = 1;

@@ -41,4 +41,5 @@ extern PMS_status PMS_sleep(PMS_typedef *PMS_struct);
 extern PMS_status PMS_wakeup(PMS_typedef *PMS_struct);
 extern PMS_status PMS_read(PMS_typedef *PMS_struct);
 
+
 #endif /* INC_PMS7003_HAL_STM32_H_ */
