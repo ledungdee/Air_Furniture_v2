@@ -3080,7 +3080,7 @@ Image component sizes
 
         60          0          0          0          0       3903   delay.o
        344          0          0          0          8       1880   dht22.o
-      4032        108        119         12        415      20462   main.o
+      4032        108        119         12        415      20444   main.o
       2666          0          0         59          1      14484   pms7003_hal_stm32.o
       1760         12          0          0          1      13632   st7920_serial.o
         64         26        236          0       1536        792   startup_stm32f103xb.o
@@ -3097,7 +3097,7 @@ Image component sizes
          2          0         24          4          0       1582   system_stm32f1xx.o
 
     ----------------------------------------------------------------------
-     17240        170        432         88       1968     213371   Object Totals
+     17240        170        432         88       1968     213353   Object Totals
          0          0         32          0          0          0   (incl. Generated)
         96          0          3          5          3          0   (incl. Padding)
 
@@ -3172,8 +3172,8 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     19960        322        432         88       2064     214391   Grand Totals
-     19960        322        432         88       2064     214391   ELF Image Totals
+     19960        322        432         88       2064     214373   Grand Totals
+     19960        322        432         88       2064     214373   ELF Image Totals
      19960        322        432         88          0          0   ROM Totals
 
 ==============================================================================

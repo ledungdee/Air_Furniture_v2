@@ -202,14 +202,25 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	}
 	// to enable pump acive
 	if(GPIO_Pin == GPIO_PIN_7){
+		/*
 		if(HAL_GetTick() - btn_Interval >= 300){
 			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 			is_Btn_Pushed = 1;
 			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
 			btn_Interval = HAL_GetTick();
 		}
-	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_7);
-	HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
+		*/
+		if(HAL_GetTick() - btn_Interval >= 1000){
+			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+			is_Btn_Pushed = 1;
+			btn_Interval = HAL_GetTick();
+			sMode ++;
+			if(sMode > 4){
+				sMode = 0;
+			}
+		}
+		__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_7);
+		HAL_NVIC_ClearPendingIRQ(EXTI9_5_IRQn);
 	}
 	
 	if(GPIO_Pin == GPIO_PIN_8){
